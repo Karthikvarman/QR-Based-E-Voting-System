@@ -1,0 +1,53 @@
+-- Create the database
+CREATE DATABASE IF NOT EXISTS voting_system 
+CHARACTER SET utf8mb4 
+COLLATE utf8mb4_unicode_ci;
+
+USE voting_system;
+
+-- Create voters table
+CREATE TABLE IF NOT EXISTS voters (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    aadhaar VARCHAR(12) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    dob DATE NOT NULL,
+    password_hash VARCHAR(64) NOT NULL,
+    qr_code_data VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_aadhaar_length CHECK (LENGTH(aadhaar) = 12),
+    CONSTRAINT chk_aadhaar_numeric CHECK (aadhaar REGEXP '^[0-9]+$')
+);
+
+-- Create votes table
+CREATE TABLE IF NOT EXISTS votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    voter_id INT NOT NULL,
+    candidate TEXT NOT NULL,
+    voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (voter_id) REFERENCES voters(id) ON DELETE CASCADE,
+    CONSTRAINT unique_voter UNIQUE (voter_id)
+);
+
+-- Create candidate_results table with political parties
+CREATE TABLE IF NOT EXISTS candidate_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    candidate_name VARCHAR(100) UNIQUE NOT NULL,
+    vote_count INT DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert political parties
+INSERT INTO candidate_results (candidate_name) VALUES
+    ('AIADMK'),
+    ('BJP'),
+    ('DMK'),
+    ('TVK'),
+    ('PMK'),
+    ('VCK'),
+    ('DMDK')
+ON DUPLICATE KEY UPDATE candidate_name = candidate_name;
+
+-- Create admin user
+CREATE USER IF NOT EXISTS 'voting_app'@'localhost' IDENTIFIED BY 'AppSecurePassword123!';
+GRANT ALL PRIVILEGES ON voting_system.* TO 'voting_app'@'localhost';
+FLUSH PRIVILEGES;
